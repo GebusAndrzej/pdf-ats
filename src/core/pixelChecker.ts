@@ -16,21 +16,58 @@ export interface VisualCheckResult {
   visualCheckPassed: boolean;
   totalPagesCompared: number;
   totalDiffPixels: number;
+  pageCountMismatch?: boolean;
+  origPageCount: number;
+  modPageCount: number;
   pages: PagePixelResult[];
 }
 
+/**
+ * Renderuje szybką miniaturkę wybranej strony PDF (np. do podglądu w dropzone).
+ */
+export async function renderSinglePageThumbnail(
+  pdfBytes: Uint8Array | ArrayBuffer,
+  pageNumber: number = 1,
+  dpi: number = 72
+): Promise<{ dataUrl: string; width: number; height: number; pageCount: number }> {
+  const data = (pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes)).slice();
+  const doc = await pdfjsLib.getDocument({ data }).promise;
+  const safePageNum = Math.min(Math.max(1, pageNumber), doc.numPages);
+  const page = await doc.getPage(safePageNum);
+
+  const scale = dpi / 72;
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  const ctx = canvas.getContext('2d')!;
+
+  await page.render({ canvasContext: ctx as any, viewport }).promise;
+
+  return {
+    dataUrl: canvas.toDataURL('image/png'),
+    width: canvas.width,
+    height: canvas.height,
+    pageCount: doc.numPages,
+  };
+}
+
+/**
+ * Porównuje strony obu dokumentów piksel po pikselu w rozdzielczości 150 DPI.
+ */
 export async function verifyVisualPixels(
   origBytes: Uint8Array | ArrayBuffer,
   modBytes: Uint8Array | ArrayBuffer,
   dpi: number = 150
 ): Promise<VisualCheckResult> {
-  const origData = origBytes instanceof Uint8Array ? origBytes : new Uint8Array(origBytes);
-  const modData = modBytes instanceof Uint8Array ? modBytes : new Uint8Array(modBytes);
+  const origData = (origBytes instanceof Uint8Array ? origBytes : new Uint8Array(origBytes)).slice();
+  const modData = (modBytes instanceof Uint8Array ? modBytes : new Uint8Array(modBytes)).slice();
 
   const origDoc = await pdfjsLib.getDocument({ data: origData }).promise;
   const modDoc = await pdfjsLib.getDocument({ data: modData }).promise;
 
   const minPages = Math.min(origDoc.numPages, modDoc.numPages);
+  const isPageCountMismatch = origDoc.numPages !== modDoc.numPages;
   const scale = dpi / 72; // Przeliczenie DPI na skalę (PDF bazowo = 72 DPI)
   const pageResults: PagePixelResult[] = [];
   let totalDiff = 0;
@@ -94,10 +131,15 @@ export async function verifyVisualPixels(
     });
   }
 
+  const visualCheckPassed = (totalDiff === 0) && !isPageCountMismatch;
+
   return {
-    visualCheckPassed: totalDiff === 0,
+    visualCheckPassed,
     totalPagesCompared: minPages,
     totalDiffPixels: totalDiff,
+    pageCountMismatch: isPageCountMismatch,
+    origPageCount: origDoc.numPages,
+    modPageCount: modDoc.numPages,
     pages: pageResults,
   };
 }
