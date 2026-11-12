@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { UploadCloud, FileCheck, RefreshCw, ArrowRightLeft, Search, Loader2, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { UploadCloud, FileCheck, RefreshCw, ArrowRightLeft, Search, Loader2 } from 'lucide-react';
 import { renderSinglePageThumbnail } from '../core/pixelChecker';
 
 interface CompareDropzoneProps {
@@ -23,9 +23,6 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
 
   const [isDragOrig, setIsDragOrig] = useState(false);
   const [isDragMod, setIsDragMod] = useState(false);
-
-  const origInputRef = useRef<HTMLInputElement>(null);
-  const modInputRef = useRef<HTMLInputElement>(null);
 
   const handleOrigFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -97,7 +94,8 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
           </div>
 
           {!origFile ? (
-            <div
+            <label
+              htmlFor={isProcessing ? undefined : 'orig-pdf-upload'}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (!isProcessing) setIsDragOrig(true);
@@ -110,19 +108,21 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                   handleOrigFile(e.dataTransfer.files[0]);
                 }
               }}
-              onClick={() => !isProcessing && origInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+              className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                 isDragOrig
                   ? 'border-blue-500 bg-blue-50/50'
                   : 'border-slate-300 hover:border-blue-400 bg-slate-50/50 hover:bg-slate-50'
-              } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isProcessing ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
             >
               <input
-                ref={origInputRef}
+                id="orig-pdf-upload"
                 type="file"
-                accept=".pdf,application/pdf"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleOrigFile(e.target.files[0])}
+                accept=".pdf"
+                className="sr-only"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleOrigFile(e.target.files[0]);
+                  e.target.value = '';
+                }}
                 disabled={isProcessing}
               />
               <div className="flex flex-col items-center justify-center gap-2">
@@ -130,7 +130,7 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                 <p className="text-xs font-semibold text-slate-700">Wybierz lub upuść oryginał (PDF)</p>
                 <p className="text-[11px] text-slate-400">Plik wzorcowy przed wstrzyknięciem tekstu</p>
               </div>
-            </div>
+            </label>
           ) : (
             <div className="p-3.5 bg-blue-50/60 border border-blue-200 rounded-xl space-y-3">
               <div className="flex items-center justify-between gap-2">
@@ -145,23 +145,26 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => origInputRef.current?.click()}
-                  disabled={isProcessing}
-                  className="text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1 px-2.5 py-1 rounded border border-blue-200 bg-white hover:bg-blue-50 shrink-0 cursor-pointer"
+                <label
+                  htmlFor={isProcessing ? undefined : 'orig-pdf-change'}
+                  className={`text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1 px-2.5 py-1 rounded border border-blue-200 bg-white hover:bg-blue-50 shrink-0 cursor-pointer ${
+                    isProcessing ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                  }`}
                 >
                   <RefreshCw className="w-3 h-3" />
                   Zmień
-                </button>
-                <input
-                  ref={origInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleOrigFile(e.target.files[0])}
-                  disabled={isProcessing}
-                />
+                  <input
+                    id="orig-pdf-change"
+                    type="file"
+                    accept=".pdf"
+                    className="sr-only"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) handleOrigFile(e.target.files[0]);
+                      e.target.value = '';
+                    }}
+                    disabled={isProcessing}
+                  />
+                </label>
               </div>
 
               {/* Miniaturka pierwszej strony */}
@@ -196,7 +199,8 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
           </div>
 
           {!modFile ? (
-            <div
+            <label
+              htmlFor={isProcessing ? undefined : 'mod-pdf-upload'}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (!isProcessing) setIsDragMod(true);
@@ -209,19 +213,21 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                   handleModFile(e.dataTransfer.files[0]);
                 }
               }}
-              onClick={() => !isProcessing && modInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+              className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                 isDragMod
                   ? 'border-emerald-500 bg-emerald-50/50'
                   : 'border-slate-300 hover:border-emerald-400 bg-slate-50/50 hover:bg-slate-50'
-              } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isProcessing ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
             >
               <input
-                ref={modInputRef}
+                id="mod-pdf-upload"
                 type="file"
-                accept=".pdf,application/pdf"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleModFile(e.target.files[0])}
+                accept=".pdf"
+                className="sr-only"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) handleModFile(e.target.files[0]);
+                  e.target.value = '';
+                }}
                 disabled={isProcessing}
               />
               <div className="flex flex-col items-center justify-center gap-2">
@@ -229,7 +235,7 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                 <p className="text-xs font-semibold text-slate-700">Wybierz lub upuść plik zmodyfikowany (PDF)</p>
                 <p className="text-[11px] text-slate-400">Dokument z dodanymi słowami kluczowymi</p>
               </div>
-            </div>
+            </label>
           ) : (
             <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3">
               <div className="flex items-center justify-between gap-2">
@@ -244,23 +250,26 @@ export const CompareDropzone: React.FC<CompareDropzoneProps> = ({
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => modInputRef.current?.click()}
-                  disabled={isProcessing}
-                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 px-2.5 py-1 rounded border border-emerald-200 bg-white hover:bg-emerald-50 shrink-0 cursor-pointer"
+                <label
+                  htmlFor={isProcessing ? undefined : 'mod-pdf-change'}
+                  className={`text-xs font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 px-2.5 py-1 rounded border border-emerald-200 bg-white hover:bg-emerald-50 shrink-0 cursor-pointer ${
+                    isProcessing ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                  }`}
                 >
                   <RefreshCw className="w-3 h-3" />
                   Zmień
-                </button>
-                <input
-                  ref={modInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleModFile(e.target.files[0])}
-                  disabled={isProcessing}
-                />
+                  <input
+                    id="mod-pdf-change"
+                    type="file"
+                    accept=".pdf"
+                    className="sr-only"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) handleModFile(e.target.files[0]);
+                      e.target.value = '';
+                    }}
+                    disabled={isProcessing}
+                  />
+                </label>
               </div>
 
               {/* Miniaturka pierwszej strony */}

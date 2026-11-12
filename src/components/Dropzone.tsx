@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { UploadCloud, FileCheck, RefreshCw } from 'lucide-react';
 
 interface DropzoneProps {
@@ -17,7 +17,6 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   disabled,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -42,6 +41,8 @@ export const Dropzone: React.FC<DropzoneProps> = ({
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
+    // Zresetuj wartość, aby ponowne wybranie tego samego pliku również wyzwoliło zdarzenie
+    e.target.value = '';
   };
 
   return (
@@ -52,25 +53,25 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       </h2>
 
       {!selectedFile ? (
-        <div
+        <label
+          htmlFor={disabled ? undefined : 'main-pdf-upload'}
           onDragOver={(e) => {
             e.preventDefault();
             if (!disabled) setIsDragOver(true);
           }}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={handleDrop}
-          onClick={() => !disabled && inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+          className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
             isDragOver
               ? 'border-blue-500 bg-blue-50/50'
               : 'border-slate-300 hover:border-blue-400 bg-slate-50/50 hover:bg-slate-50'
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
         >
           <input
-            ref={inputRef}
+            id="main-pdf-upload"
             type="file"
-            accept=".pdf,application/pdf"
-            className="hidden"
+            accept=".pdf"
+            className="sr-only"
             onChange={handleInputChange}
             disabled={disabled}
           />
@@ -85,7 +86,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
               <p className="text-xs text-slate-500 mt-1">lub kliknij, aby wybrać dokument z dysku</p>
             </div>
           </div>
-        </div>
+        </label>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-blue-50/60 border border-blue-200/80 rounded-xl">
@@ -100,23 +101,23 @@ export const Dropzone: React.FC<DropzoneProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={disabled}
-              className="text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-white hover:bg-blue-50 transition-colors"
+            <label
+              htmlFor={disabled ? undefined : 'change-pdf-upload'}
+              className={`text-xs font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-white hover:bg-blue-50 transition-colors cursor-pointer ${
+                disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+              }`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Zmień plik
-            </button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,application/pdf"
-              className="hidden"
-              onChange={handleInputChange}
-              disabled={disabled}
-            />
+              <input
+                id="change-pdf-upload"
+                type="file"
+                accept=".pdf"
+                className="sr-only"
+                onChange={handleInputChange}
+                disabled={disabled}
+              />
+            </label>
           </div>
 
           <div>

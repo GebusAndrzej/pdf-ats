@@ -17,15 +17,25 @@ export const DownloadBar: React.FC<DownloadBarProps> = ({
   if (!modifiedPdfBytes) return null;
 
   const handleDownloadPdf = () => {
+    if (!modifiedPdfBytes) return;
+    let filename = (outputFileName || 'cv_ats.pdf').trim();
+    if (!filename.toLowerCase().endsWith('.pdf')) {
+      filename += '.pdf';
+    }
+
     const blob = new Blob([modifiedPdfBytes as BlobPart], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
-    a.download = outputFileName || 'cv_ats.pdf';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
   };
 
   const handleDownloadReport = () => {
@@ -33,12 +43,16 @@ export const DownloadBar: React.FC<DownloadBarProps> = ({
     const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = 'raport_weryfikacji_ats.txt';
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
   };
 
   return (
